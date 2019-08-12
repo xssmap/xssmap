@@ -1,2 +1,1 @@
-# xssmap
-p
+xssmap
