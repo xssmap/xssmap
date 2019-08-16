@@ -15,25 +15,29 @@ class Package:
         self.right = 0
 
     def process(self):
-        result = re.findall('Cookie: (.*?)\n', self.content, flags=re.DOTALL+re.MULTILINE)
+        result = re.findall('Cookie: (.*?)\n', self.content, flags=re.DOTALL + re.MULTILINE)
         if result.__len__() > 0:
             self.cookies = result[0]
         position = self.content.find('\n\n')
         if position > 0:
-            self.data = self.content[position+2:]
-        result = re.findall('\n(.*?)\n\n', self.content, flags=re.DOTALL+re.MULTILINE)
+            self.data = self.content[position + 2:]
+        result = re.findall('\n(.*?)\n\n', self.content, flags=re.DOTALL + re.MULTILINE)
         if result.__len__() > 0:
             self.headers = self.headers
-        result = re.findall('Host: (.*?)\n', self.content, flags=re.DOTALL+re.MULTILINE)
+        result = re.findall('Host: (.*?)\n', self.content, flags=re.DOTALL + re.MULTILINE)
         if result.__len__() > 0:
             if self.ssl == 1:
-                self.url = "https://"+result[0]
+                self.url = "https://" + result[0]
             else:
-                self.url = "http://"+result[0]
-        result = re.findall('POST (.*?) HTTP/1.1', self.content, flags=re.DOTALL+re.MULTILINE)
+                self.url = "http://" + result[0]
+        result = re.findall('POST (.*?) HTTP/1.1', self.content, flags=re.DOTALL + re.MULTILINE)
         if result.__len__() > 0:
             self.url += result[0]
-        result = re.findall('\n(.*?)\n\n', self.content, flags=re.DOTALL+re.MULTILINE)
+        else:
+            result = re.findall('GET (.*?) HTTP/1.1', self.content, flags=re.DOTALL + re.MULTILINE)
+            if result.__len__() > 0:
+                self.url += result[0]
+        result = re.findall('\n(.*?)\n\n', self.content, flags=re.DOTALL + re.MULTILINE)
         result[0] += '\n'
         if result.__len__() > 0:
             i = 0
@@ -51,28 +55,29 @@ class Package:
                 self.headers.update({key: value})
                 if i == result[0].__len__():
                     break
-        self.left = self.data.find('$')
-        self.right = self.data.rfind('$')
         payload = Payload()
+        if self.content[0] == 'G':
+            self.left = self.content.find('$')
+            self.right = self.content.rfind('$')
+        else:
+            self.left = self.data.find('$')
+            self.right = self.data.rfind('$')
         for item in payload.payloads:
-            network = Network(self.url, self.data.replace(self.data[self.left:self.right+1], item), 'post', self.headers)
+            if self.content[0] == 'P':
+                network = Network(self.url, self.data.replace(self.data[self.left:self.right + 1], item), 'post', self.headers)
+            else:
+                network = Network(self.url, self.data.replace(self.data[self.left:self.right + 1], item), 'get', self.headers)
             network.send()
 
 
-package = Package('''POST /include/auth_action.php HTTP/1.1
-Content-Type: application/x-www-form-urlencoded; charset=UTF-8
-Accept: */*
-X-Requested-With: XMLHttpRequest
-Referer: https://gw.buaa.edu.cn:803/beihanglogin.php?ac_id=20&url=http://gw.buaa.edu.cn:803/beihangview.php
-Accept-Language: zh-Hans-CN,zh-Hans;q=0.5
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko
-Host: gw.buaa.edu.cn:803
-Content-Length: 9
+package = Package('''GET /data/2    .4.1.$6$/version.xml HTTP/1.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1;Miser Report)
+Host: miserupdate.aliyun.com
+Pragma: no-cache
 Connection: close
-Cache-Control: no-cache
-Cookie: cookie=25027385
 
-{"1","$2$"}''', 1)
+''', 1)
 package.process()
 
 
