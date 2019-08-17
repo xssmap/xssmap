@@ -70,7 +70,7 @@ class Package:
             network.send()
 
 
-package = Package('''GET /data/2    .4.1.$6$/version.xml HTTP/1.1
+package = Package('''GET /data/2.4.1.$6$/version.xml HTTP/1.1
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1;Miser Report)
 Host: miserupdate.aliyun.com
