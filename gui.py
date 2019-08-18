@@ -2,16 +2,19 @@
 import tkinter
 from tkinter import ttk
 from tkinter import messagebox
+import ctypes
 
 
 class Gui:
     def __init__(self):
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
         self.window = tkinter.Tk()
         self.window.title("xssmap")
         self.height = 800
         self.width = 1024
         self.window.geometry("%dx%d+%d+%d" % (self.width, self.height, (self.window.winfo_screenwidth() - self.width) / 2, (self.window.winfo_screenheight() - self.height) / 2))
         self.window.resizable(width=False, height=False)
+        self.window.iconbitmap("xssmap.ico")
         self.text1 = None
         self.button1 = None
         self.button2 = None
