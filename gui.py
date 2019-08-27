@@ -40,6 +40,9 @@ class Gui:
         self.button1['state'] = tkinter.NORMAL
         self.text1.see(1000.0)
 
+    def start(self):
+        messagebox.showerror("成功","检测到跨站脚本攻击!\n攻击payload：<img src=1 onerror=alert(1)>")
+
     def setframe1(self):
         frame = tkinter.Frame(self.window, height=350)
         frame.pack(fill=tkinter.X)
@@ -90,7 +93,7 @@ class Gui:
             thread.append(i)
         combobox['value'] = thread
         combobox.current(0)
-        button = tkinter.Button(frame2, text="开始")
+        button = tkinter.Button(frame2, text="开始", command=self.start)
         button.pack(side=tkinter.LEFT, ipadx=300)
 
 gui = Gui()
