@@ -22,7 +22,6 @@ class Encode:
                 s += '\u0022'
             else:
                 s += c
-        print s
 
     def urlencode(self):
         print urllib.quote(self.payload)
