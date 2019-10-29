@@ -65,9 +65,11 @@ class Package:
         for item in payload.payloads:
             if self.content[0] == 'P':
                 network = Network(self.url, self.data.replace(self.data[self.left:self.right + 1], item), 'post', self.headers)
-            else:
+                network.send()
+            if self.content[0] == 'G':
                 network = Network(self.url, self.data.replace(self.data[self.left:self.right + 1], item), 'get', self.headers)
-            network.send()
+                print self.content
+                network.send()
 
 
 package = Package('''GET /data/2.4.1.$6$/version.xml HTTP/1.1

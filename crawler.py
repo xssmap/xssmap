@@ -9,8 +9,12 @@ import re
 
 
 class Crawler:
-    def __init__(self, domain):
+    def __init__(self, domain, threads, headers):
         self.domain = domain
+        self.threads = threads
+        self.headers = {}
+        if headers != '':
+            self.setheader(headers)
         if 'https' in self.domain:
             self.domain1 = self.domain.replace('https://', '')
             self.domain2 = 'http://' + self.domain1
@@ -34,19 +38,6 @@ class Crawler:
                 return False
         return True
 
-    def stepthree(self, url):
-        url += '&'
-        index2 = url.find('=') + 1
-        newurl = url[0:url.find('=') + 1] + 'xss'
-        while True:
-            index1 = url.find('&', index2 + 1)
-            index2 = url.find('=', index2 + 1)
-            if index1 > 0 and index2 > 0:
-                newurl += url[index1:index2] + '=xss'
-            else:
-                break
-        print newurl
-
     def black2(self, domain, url):
         if '.js' in url and '.jsp' not in url:
             if self.domain in url or self.domain1 in url or self.domain2 in url:
@@ -63,6 +54,28 @@ class Crawler:
             return True
         else:
             return False
+
+    def setheader(self, url):
+        index = 0
+        l = 0
+        url += '\n'
+        while index < url.__len__() - 1:
+            index = url.find(':', index)
+            index1 = url.find('\n', index)
+            index2 = url.find('\n', index1 + 1)
+            if ':' not in url[index1:index2]:
+                while ':' not in url[index1:index2]:
+                    index3 = index2
+                    index2 = url.find('\n', index2 + 1)
+                    if index2 <= 0:
+                        index2 = index3
+                        break
+            else:
+                index2 = index1
+            self.headers.update({url[l:index]: url[index + 1:index2]})
+            index = index2 + 1
+            l = index
+        print self.headers
 
     def stepone(self):
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -95,6 +108,7 @@ class Crawler:
                     if url.__len__() > 0:
                         if url[0] == '/':
                             url = url.replace('//', '')
+                        url = url.replace('&amp;', '&')
                     if self.black2(self.domain, url):
                         if not self.bloomfilter.add(url):
                             self.queue.put(url)
@@ -107,24 +121,40 @@ class Crawler:
                         if not self.bloomfilter.add(url):
                             self.queue.put(url)
                         continue
-        for i in range(0, 20):
+        for i in range(0, self.threads):
             thread.start_new_thread(self.steptwo, ())
-        time.sleep(1000)
+        time.sleep(99999)
 
     def steptwo(self):
         while True:
             self.lock.acquire()
             url = self.queue.get()
             self.lock.release()
+            url = url.replace('&amp;', '&')
             if '?' in url and '=' in url:
                 self.stepthree(url)
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             if 'http' in url:
-                r = requests.get(url=url, verify=False, timeout=15)
+                try:
+                    r = requests.get(url=url, verify=False, timeout=15)
+                except requests.exceptions.Timeout:
+                    pass
+                except requests.exceptions.ConnectionError:
+                    pass
             else:
-                r = requests.get(url="http://" + url, verify=False, timeout=15)
+                try:
+                    r = requests.get(url="http://" + url, verify=False, timeout=15)
+                except requests.exceptions.Timeout:
+                    pass
+                except requests.exceptions.ConnectionError:
+                    pass
                 if r.text.__len__() < 100:
-                    r = requests.get(url="https://" + url, verify=False, timeout=15)
+                    try:
+                        r = requests.get(url="https://" + url, verify=False, timeout=15)
+                    except requests.exceptions.Timeout:
+                        pass
+                    except requests.exceptions.ConnectionError:
+                        pass
             content = r.text
             href = re.findall(self.rule, content)
             if href.__len__() > 0:
@@ -146,5 +176,28 @@ class Crawler:
                                 self.queue.put(url)
                             continue
 
-crawler = Crawler("dushu.qq.com")
-crawler.stepthree("http://www.baidu.com/?abc=1fesgfoij&b=fdsaiofhji&c=12&d=&e1=fsda")
+    def stepthree(self, url):
+        url += '&'
+        index2 = url.find('=') + 1
+        newurl = url[0:url.find('=') + 1] + 'xss'
+        while True:
+            index1 = url.find('&', index2 + 1)
+            index2 = url.find('=', index2 + 1)
+            if index1 > 0 and index2 > 0:
+                newurl += url[index1:index2] + '=xss'
+            else:
+                break
+        if not self.bloomfilter2.add(newurl):
+            self.urlqueue.put(newurl)
+            print newurl
+
+crawler = Crawler("http://tx.com.cn", 10, '''Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1;Miser Report)
+Host: miserupdate.aliyun.com
+Pragma: no-cache
+Connection: close
+Cookie: a=213;b=222;
+c=333;d=222;
+g=ee;
+''')
+crawler.stepone()
