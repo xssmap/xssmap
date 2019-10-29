@@ -1,11 +1,11 @@
 import requests
-import re
 import urllib3
 from queue import Queue
 import thread
 import threading
 import time
 from pybloom import ScalableBloomFilter
+import re
 
 
 class Crawler:
@@ -21,9 +21,12 @@ class Crawler:
             self.domain1 = 'http://' + self.domain
             self.domain2 = 'https://' + self.domain
         self.queue = Queue()
+        self.urlqueue = Queue()
         self.lock = threading.RLock()
-        self.bloomfilter = ScalableBloomFilter(initial_capacity=1000, error_rate=0.001, mode=ScalableBloomFilter.LARGE_SET_GROWTH)
-        self.blacklist = ['.css', '.js', '.jpg', '.mp4', '.png', '.gif', '.avi', '.jpeg', '.ico', '.mp3']
+        self.bloomfilter = ScalableBloomFilter(initial_capacity=10000, error_rate=0.001, mode=ScalableBloomFilter.LARGE_SET_GROWTH)
+        self.bloomfilter2 = ScalableBloomFilter(initial_capacity=10000, error_rate=0.001, mode=ScalableBloomFilter.LARGE_SET_GROWTH)
+        self.blacklist = ['.css', '.jpg', '.mp4', '.png', '.gif', '.avi', '.jpeg', '.ico', '.mp3']
+        self.rule = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
     def black(self, url):
         for i in self.blacklist:
@@ -31,8 +34,25 @@ class Crawler:
                 return False
         return True
 
-    @staticmethod
-    def black2(domain, url):
+    def stepthree(self, url):
+        url += '&'
+        index2 = url.find('=') + 1
+        newurl = url[0:url.find('=') + 1] + 'xss'
+        while True:
+            index1 = url.find('&', index2 + 1)
+            index2 = url.find('=', index2 + 1)
+            if index1 > 0 and index2 > 0:
+                newurl += url[index1:index2] + '=xss'
+            else:
+                break
+        print newurl
+
+    def black2(self, domain, url):
+        if '.js' in url and '.jsp' not in url:
+            if self.domain in url or self.domain1 in url or self.domain2 in url:
+                return True
+            else:
+                return False
         if '.' + domain in url:
             return False
         if '=' + domain in url:
@@ -47,13 +67,28 @@ class Crawler:
     def stepone(self):
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         if 'http' in self.domain:
-            r = requests.get(url=self.domain, verify=False)
+            try:
+                r = requests.get(url=self.domain, verify=False, timeout=15)
+            except requests.exceptions.Timeout:
+                pass
+            except requests.exceptions.ConnectionError:
+                pass
         else:
-            r = requests.get(url="http://" + self.domain, verify=False)
+            try:
+                r = requests.get(url="http://" + self.domain, verify=False, timeout=15)
+            except requests.exceptions.Timeout:
+                pass
+            except requests.exceptions.ConnectionError:
+                pass
             if r.text.__len__() < 100:
-                r = requests.get(url="https://" + self.domain, verify=False)
+                try:
+                    r = requests.get(url="https://" + self.domain, verify=False, timeout=15)
+                except requests.exceptions.Timeout:
+                    pass
+                except requests.exceptions.ConnectionError:
+                    pass
         content = r.text
-        href = re.findall('href="(.*?)"', content)
+        href = re.findall(self.rule, content)
         if href.__len__() > 0:
             for url in href:
                 if self.black(url):
@@ -80,17 +115,18 @@ class Crawler:
         while True:
             self.lock.acquire()
             url = self.queue.get()
-            print url
             self.lock.release()
+            if '?' in url and '=' in url:
+                self.stepthree(url)
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             if 'http' in url:
-                r = requests.get(url=url, verify=False)
+                r = requests.get(url=url, verify=False, timeout=15)
             else:
-                r = requests.get(url="http://" + url, verify=False)
+                r = requests.get(url="http://" + url, verify=False, timeout=15)
                 if r.text.__len__() < 100:
-                    r = requests.get(url="https://" + url, verify=False)
+                    r = requests.get(url="https://" + url, verify=False, timeout=15)
             content = r.text
-            href = re.findall('href="(.*?)"', content)
+            href = re.findall(self.rule, content)
             if href.__len__() > 0:
                 for url in href:
                     if url.__len__() > 0:
@@ -111,4 +147,4 @@ class Crawler:
                             continue
 
 crawler = Crawler("dushu.qq.com")
-crawler.stepone()
+crawler.stepthree("http://www.baidu.com/?abc=1fesgfoij&b=fdsaiofhji&c=12&d=&e1=fsda")
