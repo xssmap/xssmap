@@ -72,30 +72,32 @@ class Crawler:
                         break
             else:
                 index2 = index1
-            self.headers.update({url[l:index]: url[index + 1:index2]})
+            if url[index + 1] != ' ':
+                self.headers.update({url[l:index]: url[index + 1:index2].replace('\n', '')})
+            else:
+                self.headers.update({url[l:index]: url[index + 2:index2].replace('\n', '')})
             index = index2 + 1
             l = index
-        print self.headers
 
     def stepone(self):
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         if 'http' in self.domain:
             try:
-                r = requests.get(url=self.domain, verify=False, timeout=15)
+                r = requests.get(url=self.domain, verify=False, timeout=15, headers=self.headers)
             except requests.exceptions.Timeout:
                 pass
             except requests.exceptions.ConnectionError:
                 pass
         else:
             try:
-                r = requests.get(url="http://" + self.domain, verify=False, timeout=15)
+                r = requests.get(url="http://" + self.domain, verify=False, timeout=15, headers=self.headers)
             except requests.exceptions.Timeout:
                 pass
             except requests.exceptions.ConnectionError:
                 pass
             if r.text.__len__() < 100:
                 try:
-                    r = requests.get(url="https://" + self.domain, verify=False, timeout=15)
+                    r = requests.get(url="https://" + self.domain, verify=False, timeout=15, headers=self.headers)
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
@@ -136,26 +138,28 @@ class Crawler:
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             if 'http' in url:
                 try:
-                    r = requests.get(url=url, verify=False, timeout=15)
+                    r = requests.get(url=url, verify=False, timeout=15, headers=self.headers)
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
                     pass
             else:
                 try:
-                    r = requests.get(url="http://" + url, verify=False, timeout=15)
+                    r = requests.get(url="http://" + url, verify=False, timeout=15, headers=self.headers)
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
                     pass
                 if r.text.__len__() < 100:
                     try:
-                        r = requests.get(url="https://" + url, verify=False, timeout=15)
+                        r = requests.get(url="https://" + url, verify=False, timeout=15, headers=self.headers)
                     except requests.exceptions.Timeout:
                         pass
                     except requests.exceptions.ConnectionError:
                         pass
             content = r.text
+            if 'oOUFFxQ312' in content:
+                print url
             href = re.findall(self.rule, content)
             if href.__len__() > 0:
                 for url in href:
@@ -191,13 +195,5 @@ class Crawler:
             self.urlqueue.put(newurl)
             print newurl
 
-crawler = Crawler("http://tx.com.cn", 10, '''Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1;Miser Report)
-Host: miserupdate.aliyun.com
-Pragma: no-cache
-Connection: close
-Cookie: a=213;b=222;
-c=333;d=222;
-g=ee;
-''')
+crawler = Crawler("http://dushu.qq.com", 2, '''''')
 crawler.stepone()
