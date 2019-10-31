@@ -140,7 +140,7 @@ class Crawler:
         r = None
         if 'http' in self.domain:
             try:
-                r = requests.get(url=self.domain, verify=False, timeout=15, headers=self.headers, stream=True)
+                r = requests.get(url=self.domain, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
                 self.realdomain = self.domain
             except requests.exceptions.Timeout:
                 pass
@@ -148,9 +148,10 @@ class Crawler:
                 pass
             except requests.exceptions.ChunkedEncodingError:
                 pass
+
         else:
             try:
-                r = requests.get(url="http://" + self.domain, verify=False, timeout=15, headers=self.headers, stream=True)
+                r = requests.get(url="http://" + self.domain, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
                 self.realdomain = 'http://' + self.domain
             except requests.exceptions.Timeout:
                 pass
@@ -160,7 +161,7 @@ class Crawler:
                 pass
             if r.text.__len__() < 100:
                 try:
-                    r = requests.get(url="https://" + self.domain, verify=False, timeout=15, headers=self.headers, stream=True)
+                    r = requests.get(url="https://" + self.domain, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
                     self.realdomain = 'https://' + self.domain
                 except requests.exceptions.Timeout:
                     pass
@@ -225,9 +226,9 @@ class Crawler:
             if 'http' in url:
                 try:
                     if self.headers:
-                        r = requests.get(url=url, verify=False, timeout=15, headers=self.headers, stream=True)
+                        r = requests.get(url=url, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
                     else:
-                        r = requests.get(url=url, verify=False, timeout=15, headers=self.headers, stream=True, cookies=self.cookies)
+                        r = requests.get(url=url, verify=False, timeout=(10, 15), headers=self.headers, stream=True, cookies=self.cookies)
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
@@ -237,9 +238,9 @@ class Crawler:
             else:
                 try:
                     if self.headers:
-                        r = requests.get(url="http://" + url, verify=False, timeout=15, headers=self.headers, stream=True)
+                        r = requests.get(url="http://" + url, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
                     else:
-                        r = requests.get(url="http://" + url, verify=False, timeout=15, headers=self.headers, stream=True, cookies=self.cookies)
+                        r = requests.get(url="http://" + url, verify=False, timeout=(10, 15), headers=self.headers, stream=True, cookies=self.cookies)
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
@@ -249,9 +250,9 @@ class Crawler:
                 if r.text.__len__() < 100:
                     try:
                         if self.headers:
-                            r = requests.get(url="https://" + url, verify=False, timeout=15, headers=self.headers, stream=True)
+                            r = requests.get(url="https://" + url, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
                         else:
-                            r = requests.get(url="https://" + url, verify=False, timeout=15, headers=self.headers, stream=True, cookies=self.cookies)
+                            r = requests.get(url="https://" + url, verify=False, timeout=(10, 15), headers=self.headers, stream=True, cookies=self.cookies)
                     except requests.exceptions.Timeout:
                         pass
                     except requests.exceptions.ConnectionError:
@@ -259,7 +260,14 @@ class Crawler:
                     except requests.exceptions.ChunkedEncodingError:
                         pass
             if r.status_code == 200:
-                content = r.text
+                try:
+                    content = r.text
+                except requests.exceptions.ConnectionError:
+                    continue
+                except AttributeError:
+                    continue
+                except requests.exceptions.ChunkedEncodingError:
+                    continue
             else:
                 continue
             if r.headers.get('Set-Cookie'):
@@ -307,5 +315,5 @@ class Crawler:
             self.urlqueue.put(url[0:url.__len__() - 1])
             print url[0:url.__len__() - 1]
 
-crawler = Crawler("http://dushu.qq.com", 20, '''''')
+crawler = Crawler("https://tieba.baidu.com", 20, '''''')
 crawler.stepone()
