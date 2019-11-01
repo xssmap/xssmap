@@ -10,6 +10,7 @@ class GuiOne:
     def __init__(self):
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
         self.window = tkinter.Tk()
+        self.window2 = None
         self.window.title("xssmap")
         self.height = 800
         self.width = 1024
@@ -19,10 +20,33 @@ class GuiOne:
         self.window.iconbitmap("xssmap.ico")
         self.font = tkinter.font.Font(size=12)
         self.font2 = tkinter.font.Font(size=10)
+        self.font3 = tkinter.font.Font(size=15)
         self.setframe1()
         self.setframe2()
         self.setframe3()
         self.window.mainloop()
+
+    def setheader(self):
+        self.window2 = tkinter.Tk()
+        self.window2.title("自定义首部")
+        self.window2.height = 500
+        self.window2.width = 600
+        self.window2.geometry("%dx%d+%d+%d" % (self.window2.width, self.window2.height, (self.window2.winfo_screenwidth() - self.window2.width) / 2, (self.window2.winfo_screenheight() - self.window2.height) / 2))
+        self.window2.resizable(width=False, height=False)
+        frame = tkinter.Frame(self.window2, height=480)
+        frame.pack(fill=tkinter.X)
+        text = tkinter.Text(frame)
+        text.pack(fill=tkinter.Y)
+        frame2 = tkinter.Frame(self.window2, height=20)
+        frame2.pack(fill=tkinter.X)
+        frame3 = tkinter.Frame(frame2, height=20)
+        frame3.pack(side=tkinter.LEFT)
+        frame4 = tkinter.Frame(frame2, height=20)
+        frame4.pack(side=tkinter.RIGHT)
+        button = tkinter.Button(frame3, text="确定", font=self.font3)
+        button.pack(pady=30, ipadx=120)
+        button2 = tkinter.Button(frame4, text="取消", font=self.font3)
+        button2.pack(pady=30, ipadx=120)
 
     def setframe1(self):
         frame = tkinter.Frame(self.window, height=80)
@@ -46,13 +70,15 @@ class GuiOne:
         frame8.pack(side=tkinter.LEFT)
         frame9 = tkinter.Frame(frame)
         frame9.pack(side=tkinter.LEFT)
+        frame10 = tkinter.Frame(frame)
+        frame10.pack(side=tkinter.LEFT)
         thread = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
         depth = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
         times = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
         label = tkinter.Label(frame1, text="域名", font=self.font)
         label.pack(ipadx=10)
         entry = tkinter.Entry(frame2)
-        entry.pack(ipadx=120)
+        entry.pack(ipadx=80)
         label2 = tkinter.Label(frame3, text="线程", font=self.font)
         label2.pack(ipadx=10)
         combobox = ttk.Combobox(frame4, state="readonly", width=5)
@@ -71,8 +97,10 @@ class GuiOne:
         combobox3['value'] = times
         combobox3.current(5)
         combobox3.pack()
-        button = tkinter.Button(frame9, text="开始", font=self.font2, cursor="hand2")
-        button.pack(ipadx=15, padx=20)
+        button = tkinter.Button(frame9, text="首部", font=self.font2, cursor="hand2", command=self.setheader)
+        button.pack(ipadx=15, padx=10)
+        button2 = tkinter.Button(frame10, text="开始", font=self.font2, cursor="hand2")
+        button2.pack(ipadx=15, padx=5)
 
     def setframe2(self):
         frame = tkinter.Frame(self.window, height=360)
@@ -99,6 +127,7 @@ class GuiOne:
             text.insert(tkinter.END, "test\n")
             text.insert(tkinter.END, "test\n")
             text.insert(tkinter.END, "test1\n")
+
 
 guione = GuiOne()
 

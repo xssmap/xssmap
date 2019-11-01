@@ -60,9 +60,9 @@ class Gui:
         frame1.pack(side=tkinter.LEFT)
         frame2 = tkinter.Frame(frame)
         frame2.pack(side=tkinter.RIGHT)
-        self.button1 = tkinter.Button(frame1, text="标记参数", command=self.setflag)
+        self.button1 = tkinter.Button(frame1, text="标记参数", command=self.setflag, cursor="hand2")
         self.button1.pack(ipadx=200)
-        self.button2 = tkinter.Button(frame2, text="清除标记", command=self.unsetflag)
+        self.button2 = tkinter.Button(frame2, text="清除标记", command=self.unsetflag, cursor="hand2")
         self.button2.pack(ipadx=200)
 
     def setframe3(self):
@@ -78,23 +78,8 @@ class Gui:
         frame = tkinter.Frame(self.window, height=50)
         frame.pack(fill=tkinter.X)
         frame.pack_propagate(0)
-        frame1 = tkinter.Frame(frame, height=50, width=512)
-        frame1.pack(side=tkinter.LEFT)
-        frame1.pack_propagate(0)
-        frame2 = tkinter.Frame(frame, height=50, width=512)
-        frame2.pack(side=tkinter.RIGHT)
-        frame2.pack_propagate(0)
-        label = tkinter.Label(frame1, text="线程数")
-        label.pack(side=tkinter.LEFT, padx=80)
-        combobox = ttk.Combobox(frame1, state="readonly")
-        combobox.pack(side=tkinter.LEFT)
-        thread = []
-        for i in range(1, 21):
-            thread.append(i)
-        combobox['value'] = thread
-        combobox.current(0)
-        button = tkinter.Button(frame2, text="开始", command=self.start)
-        button.pack(side=tkinter.LEFT, ipadx=300)
+        button = tkinter.Button(frame, text="开始", command=self.start, cursor="hand2")
+        button.pack(ipadx=200)
 
 gui = Gui()
 

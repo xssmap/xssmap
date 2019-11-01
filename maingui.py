@@ -19,11 +19,9 @@ class MainGui:
         label1 = tkinter.Label(image=img)
         label1.pack()
         self.button1 = tkinter.Button(text="完整检测", font=font, cursor="hand2")
-        self.button1.pack(ipadx=45, ipady=25, pady=10)
-        self.button2 = tkinter.Button(text="URL检测", font=font, cursor="hand2")
-        self.button2.pack(ipadx=50, ipady=25, pady=10)
+        self.button1.pack(ipadx=45, ipady=25, pady=20)
         self.button3 = tkinter.Button(text="数据包检测", font=font, cursor="hand2")
-        self.button3.pack(ipadx=32, ipady=25, pady=10)
+        self.button3.pack(ipadx=32, ipady=25, pady=20)
         self.window.mainloop()
 
 
