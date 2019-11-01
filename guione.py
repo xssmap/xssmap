@@ -43,9 +43,9 @@ class GuiOne:
         frame3.pack(side=tkinter.LEFT)
         frame4 = tkinter.Frame(frame2, height=20)
         frame4.pack(side=tkinter.RIGHT)
-        button = tkinter.Button(frame3, text="确定", font=self.font3)
+        button = tkinter.Button(frame3, text="确定", font=self.font3, cursor="hand2")
         button.pack(pady=30, ipadx=120)
-        button2 = tkinter.Button(frame4, text="取消", font=self.font3)
+        button2 = tkinter.Button(frame4, text="取消", font=self.font3, cursor="hand2")
         button2.pack(pady=30, ipadx=120)
 
     def setframe1(self):
@@ -110,10 +110,6 @@ class GuiOne:
         label.pack()
         text = scrolledtext.ScrolledText(frame)
         text.pack(fill=tkinter.X)
-        for i in range(0, 20):
-            text.insert(tkinter.END, "test\n")
-            text.insert(tkinter.END, "test\n")
-            text.insert(tkinter.END, "test1\n")
 
     def setframe3(self):
         frame = tkinter.Frame(self.window, height=360)
@@ -123,10 +119,6 @@ class GuiOne:
         label.pack()
         text = scrolledtext.ScrolledText(frame)
         text.pack(fill=tkinter.X)
-        for i in range(0, 20):
-            text.insert(tkinter.END, "test\n")
-            text.insert(tkinter.END, "test\n")
-            text.insert(tkinter.END, "test1\n")
 
 
 guione = GuiOne()
