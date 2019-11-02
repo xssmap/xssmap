@@ -296,7 +296,7 @@ class Crawler:
                                 if self.black2(self.realdomain + url):
                                     if not self.bloomfilter.add(self.realdomain + url):
                                         self.queue.put(self.realdomain + url)
-            if self.count > 10000:
+            if self.count > 5000:
                 break
         minilock.release()
 

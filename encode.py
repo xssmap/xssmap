@@ -8,6 +8,9 @@ class Encode:
     def __init__(self, payload):
         self.payload = payload
 
+    def capsencode(self):
+        pass
+
     def base64encode(self):
         print base64.b32encode(self.payload)
 
