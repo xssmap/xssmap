@@ -26,6 +26,7 @@ class GuiOne:
         self.entry = None
         self.text = None
         self.text2 = None
+        self.text3 = None
         self.header = None
         self.combobox = None
         self.combobox2 = None
@@ -153,6 +154,6 @@ class GuiOne:
         frame.pack_propagate(0)
         label = tkinter.Label(frame, text="存在XSS的URL")
         label.pack()
-        text = scrolledtext.ScrolledText(frame)
-        text.pack(fill=tkinter.X)
+        self.text3 = scrolledtext.ScrolledText(frame)
+        self.text3.pack(fill=tkinter.X)
 

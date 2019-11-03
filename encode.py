@@ -5,29 +5,32 @@ import cgi
 
 
 class Encode:
-    def __init__(self, payload):
-        self.payload = payload
-        self.capsencode()
+    def __init__(self):
+        pass
 
-    def capsencode(self):
+    @staticmethod
+    def capsencode(payload):
         flag = 0
-        for i in range(0, len(self.payload)):
-            if self.payload[i] == '=':
+        for i in range(0, len(payload)):
+            if payload[i] == '=':
                 if flag == 1:
                     break
                 else:
                     flag = 1
-                    if self.payload[0] == '"':
+                    if payload[0] == '"':
                         break
-            if 'a' < self.payload[i] < 'z' and i % 2 == 0:
-                self.payload = self.payload[0: i] + chr(ord(self.payload[i]) - 32) + self.payload[i + 1:]
+            if 'a' < payload[i] < 'z' and i % 2 == 0:
+                payload = payload[0: i] + chr(ord(payload[i]) - 32) + payload[i + 1:]
+        return payload
 
-    def base64encode(self):
-        return base64.b32encode(self.payload)
+    @staticmethod
+    def base64encode(payload):
+        return base64.b32encode(payload)
 
-    def unicodeencode(self):
+    @staticmethod
+    def unicodeencode(payload):
         s = ""
-        for c in self.payload:
+        for c in payload:
             if c == '<':
                 s += '\u003c'
             elif c == '>':
@@ -38,11 +41,13 @@ class Encode:
                 s += c
         return s
 
-    def urlencode(self):
-        return urllib.quote(self.payload)
+    @staticmethod
+    def urlencode(payload):
+        return urllib.quote(payload)
 
-    def doubleencode(self):
-        s = urllib.quote(self.payload)
+    @staticmethod
+    def doubleencode(payload):
+        s = urllib.quote(payload)
         ss = ''
         for i in range(0, s.__len__()):
             if s[i] == '%':
@@ -51,7 +56,8 @@ class Encode:
                 ss += s[i]
         return ss
 
-    def htmlencode(self):
-        print cgi.escape(self.payload, quote=1)
+    @staticmethod
+    def htmlencode(payload):
+        return cgi.escape(payload, quote=1)
 
 
