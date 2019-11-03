@@ -13,8 +13,24 @@ class Network:
     def send(self):
         urllib3.disable_warnings()
         if self.method == 'get':
-            self.r = requests.get(url=self.url, headers=self.headers, verify=False)
+            try:
+                self.r = requests.get(url=self.url, headers=self.headers, verify=False)
+            except requests.exceptions.Timeout:
+                pass
+            except requests.exceptions.ConnectionError:
+                pass
+            except requests.exceptions.ChunkedEncodingError:
+                pass
+            return self.r.text
         else:
-            self.r = requests.post(url=self.url, data=self.data, headers=self.headers, verify=False)
+            try:
+                self.r = requests.post(url=self.url, data=self.data, headers=self.headers, verify=False)
+            except requests.exceptions.Timeout:
+                pass
+            except requests.exceptions.ConnectionError:
+                pass
+            except requests.exceptions.ChunkedEncodingError:
+                pass
+            return self.r.text
 
 

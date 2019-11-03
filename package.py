@@ -1,5 +1,4 @@
 import re
-from payload import Payload
 from network import Network
 
 
@@ -14,7 +13,16 @@ class Package:
         self.left = 0
         self.right = 0
 
+    def setcontent(self, content):
+        self.content = content
+
+    def setssl(self, ssl):
+        self.ssl = ssl
+
     def process(self):
+        self.cookies = None
+        self.headers = {}
+        self.data = None
         result = re.findall('Cookie: (.*?)\n', self.content, flags=re.DOTALL + re.MULTILINE)
         if result.__len__() > 0:
             self.cookies = result[0]
@@ -55,31 +63,11 @@ class Package:
                 self.headers.update({key: value})
                 if i == result[0].__len__():
                     break
-        payload = Payload()
+        if self.content[0] == 'P':
+            network = Network(self.url, self.data, 'post', self.headers)
+            return network.send()
         if self.content[0] == 'G':
-            self.left = self.content.find('$')
-            self.right = self.content.rfind('$')
-        else:
-            self.left = self.data.find('$')
-            self.right = self.data.rfind('$')
-        for item in payload.payloads:
-            if self.content[0] == 'P':
-                network = Network(self.url, self.data.replace(self.data[self.left:self.right + 1], item), 'post', self.headers)
-                network.send()
-            if self.content[0] == 'G':
-                network = Network(self.url, self.data.replace(self.data[self.left:self.right + 1], item), 'get', self.headers)
-                print self.content
-                network.send()
-
-
-package = Package('''GET /data/2.4.1.$6$/version.xml HTTP/1.1
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1;Miser Report)
-Host: miserupdate.aliyun.com
-Pragma: no-cache
-Connection: close
-
-''', 1)
-package.process()
+            network = Network(self.url, self.data, 'get', self.headers)
+            return network.send()
 
 

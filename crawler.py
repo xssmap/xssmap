@@ -181,6 +181,7 @@ class Crawler:
                 except requests.exceptions.ChunkedEncodingError:
                     pass
         content = r.text
+        print content
         if r.headers.get('Set-Cookie'):
             cookies = r.headers['Set-Cookie']
             self.setcookies(cookies)
@@ -397,31 +398,31 @@ class Crawler:
             index = content.find('<jimmywhite>', index + 2)
             if content[index - 1] != '"':
                 return True
-        content = self.network(url[0:index1 + 1] + self.encode.capsencode('<jimmywhite>'))
+        content = self.network(url[0:index1 + 1] + self.encode.capsencode('<jimmywhite>') + url[index2:])
         index = 0
         while content.find('<jimmywhite>', index + 2) > 0:
             index = content.find('<jimmywhite>', index + 2)
             if content[index - 1] != '"':
                 return True
-        content = self.network(url[0:index1 + 1] + self.encode.doubleencode('<jimmywhite>'))
+        content = self.network(url[0:index1 + 1] + self.encode.doubleencode('<jimmywhite>') + url[index2:])
         index = 0
         while content.find('<jimmywhite>', index + 2) > 0:
             index = content.find('<jimmywhite>', index + 2)
             if content[index - 1] != '"':
                 return True
-        content = self.network(url[0:index1 + 1] + self.encode.htmlencode('<jimmywhite>'))
+        content = self.network(url[0:index1 + 1] + self.encode.htmlencode('<jimmywhite>') + url[index2:])
         index = 0
         while content.find('<jimmywhite>', index + 2) > 0:
             index = content.find('<jimmywhite>', index + 2)
             if content[index - 1] != '"':
                 return True
-        content = self.network(url[0:index1 + 1] + self.encode.unicodeencode('<jimmywhite>'))
+        content = self.network(url[0:index1 + 1] + self.encode.unicodeencode('<jimmywhite>') + url[index2:])
         index = 0
         while content.find('<jimmywhite>', index + 2) > 0:
             index = content.find('<jimmywhite>', index + 2)
             if content[index - 1] != '"':
                 return True
-        content = self.network(url[0:index1 + 1] + self.encode.urlencode('<jimmywhite>'))
+        content = self.network(url[0:index1 + 1] + self.encode.urlencode('<jimmywhite>') + url[index2:])
         index = 0
         while content.find('<jimmywhite>', index + 2) > 0:
             index = content.find('<jimmywhite>', index + 2)
@@ -533,7 +534,7 @@ class Crawler:
         return 'fail'
 
     def testxss(self, minilock):
-        #minilock.acquire()
+        # minilock.acquire()
         self.lock3.acquire()
         self.controlthread += 1
         if not self.urlqueue.empty():
@@ -587,6 +588,6 @@ class Crawler:
                             continue'''
             else:
                 break
-        #minilock.release()
+        # minilock.release()
 
 
