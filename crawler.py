@@ -48,6 +48,8 @@ class Crawler:
         self.lock = threading.RLock()
         self.lock2 = threading.RLock()
         self.lock3 = threading.RLock()
+        self.lock4 = threading.RLock()
+        self.lock5 = threading.RLock()
         self.bloomfilter = ScalableBloomFilter(initial_capacity=10000, error_rate=0.001, mode=ScalableBloomFilter.LARGE_SET_GROWTH)
         self.bloomfilter2 = ScalableBloomFilter(initial_capacity=10000, error_rate=0.001, mode=ScalableBloomFilter.LARGE_SET_GROWTH)
         self.blacklist = ['<', '{', '\'', '"', '.css', '.jpg', '.mp4', '.png', '.gif', '.avi', '.jpeg', '.ico', '.mp3', '.pdf', 'docx', 'doc', 'bmp', '.rmvb', '.zip', '.rar', '.exe', '.ppt', '.pptx', 'xls']
@@ -184,6 +186,7 @@ class Crawler:
             self.setcookies(cookies)
         href = re.findall(self.rule, content)
         href2 = re.findall('href="(.*?)"', content)
+        href3 = re.findall('href=(.*?)>', content)
         if href.__len__() > 0:
             for url in href:
                 if self.black(url):
@@ -205,6 +208,18 @@ class Crawler:
                             if self.black2(self.realdomain + url):
                                 if not self.bloomfilter.add(self.realdomain + url):
                                     self.queue.put(self.realdomain + url)
+        if href3.__len__() > 0:
+            for url in href3:
+                url = url.replace('"', '')
+                if '//' not in url:
+                    if self.black(url):
+                        if url.__len__() > 0:
+                            url = url.replace('&amp;', '&')
+                            if url[0] != '/':
+                                url = '/' + url
+                            if self.black2(self.realdomain + url):
+                                if not self.bloomfilter.add(self.realdomain + url):
+                                    self.queue.put(self.realdomain + url)
         for i in range(0, 100):
             self.queue.put("https://www.baidu.com")
         locks = []
@@ -212,11 +227,22 @@ class Crawler:
             lock = threading.Lock()
             locks.append(lock)
             thread.start_new_thread(self.steptwo, (lock,))
-        time.sleep(15)
+        time.sleep(5)
         for lock in locks:
             while lock.locked():
                 pass
-        print "success"
+        time.sleep(1000)
+        '''locks = []
+        for i in range(0, 20):
+            lock = threading.Lock()
+            locks.append(lock)
+            thread.start_new_thread(self.testxss, (lock,))
+        time.sleep(5)
+        for lock in locks:
+            while lock.locked():
+                pass
+        print 1
+        time.sleep(1000)'''
 
     def steptwo(self, minilock):
         minilock.acquire()
@@ -237,7 +263,11 @@ class Crawler:
                     if self.headers:
                         r = requests.get(url=url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                     else:
-                        r = requests.get(url=url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=self.cookies)
+                        self.lock2.acquire()
+                        cookies = self.cookies
+                        self.lock2.release()
+                        r = requests.get(url=url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=cookies)
+
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
@@ -249,7 +279,10 @@ class Crawler:
                     if self.headers:
                         r = requests.get(url="http://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                     else:
-                        r = requests.get(url="http://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=self.cookies)
+                        self.lock2.acquire()
+                        cookies = self.cookies
+                        self.lock2.release()
+                        r = requests.get(url="http://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=cookies)
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
@@ -261,7 +294,10 @@ class Crawler:
                         if self.headers:
                             r = requests.get(url="https://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                         else:
-                            r = requests.get(url="https://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=self.cookies)
+                            self.lock2.acquire()
+                            cookies = self.cookies
+                            self.lock2.release()
+                            r = requests.get(url="https://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=cookies)
                     except requests.exceptions.Timeout:
                         pass
                     except requests.exceptions.ConnectionError:
@@ -322,17 +358,21 @@ class Crawler:
                 break
         if not self.bloomfilter2.add(newurl):
             self.urlqueue.put(url[0:url.__len__() - 1])
+            self.lock5.acquire()
             self.father.text2.insert("end", url[0:url.__len__() - 1] + '\n')
+            self.lock5.release()
             if self.controlthread < 20:
-                thread.start_new_thread(self.testxss, ())
+                thread.start_new_thread(self.testxss, (None,))
 
     def network(self, url):
         try:
             if self.headers:
                 r = requests.get(url=url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
             else:
-                r = requests.get(url=url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True,
-                                 cookies=self.cookies)
+                self.lock2.acquire()
+                cookies = self.cookies
+                r = requests.get(url=url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=cookies)
+                self.lock2.release()
         except requests.exceptions.Timeout:
             pass
         except requests.exceptions.ConnectionError:
@@ -351,101 +391,156 @@ class Crawler:
 
     def typeone(self, url, index1, index2):
         url = url.strip('&')
-        if self.network(url[0:index1 + 1] + '<jimmywhite>' + url[index2:]).find('<jimmywhite>') > 0:
-            return True
-        if self.network(url[0:index1 + 1] + self.encode.capsencode('<jimmywhite>') + url[index2:]).find('<jimmywhite>') > 0:
-            return True
-        if self.network(url[0:index1 + 1] + self.encode.doubleencode('<jimmywhite>') + url[index2:]).find('<jimmywhite>') > 0:
-            return True
-        if self.network(url[0:index1 + 1] + self.encode.htmlencode('<jimmywhite>') + url[index2:]).find('<jimmywhite>') > 0:
-            return True
-        if self.network(url[0:index1 + 1] + self.encode.unicodeencode('<jimmywhite>') + url[index2:]).find('<jimmywhite>') > 0:
-            return True
-        if self.network(url[0:index1 + 1] + self.encode.urlencode('<jimmywhite>') + url[index2:]).find('<jimmywhite>') > 0:
-            return True
-        if self.network(url[0:index1 + 1] + self.encode.base64encode('<jimmywhite>') + url[index2:]).find('<jimmywhite>') > 0:
-            return True
+        content = self.network(url[0:index1 + 1] + '<jimmywhite>' + url[index2:])
+        index = 0
+        while content.find('<jimmywhite>', index + 2) > 0:
+            index = content.find('<jimmywhite>', index + 2)
+            if content[index - 1] != '"':
+                return True
+        content = self.network(url[0:index1 + 1] + self.encode.capsencode('<jimmywhite>'))
+        index = 0
+        while content.find('<jimmywhite>', index + 2) > 0:
+            index = content.find('<jimmywhite>', index + 2)
+            if content[index - 1] != '"':
+                return True
+        content = self.network(url[0:index1 + 1] + self.encode.doubleencode('<jimmywhite>'))
+        index = 0
+        while content.find('<jimmywhite>', index + 2) > 0:
+            index = content.find('<jimmywhite>', index + 2)
+            if content[index - 1] != '"':
+                return True
+        content = self.network(url[0:index1 + 1] + self.encode.htmlencode('<jimmywhite>'))
+        index = 0
+        while content.find('<jimmywhite>', index + 2) > 0:
+            index = content.find('<jimmywhite>', index + 2)
+            if content[index - 1] != '"':
+                return True
+        content = self.network(url[0:index1 + 1] + self.encode.unicodeencode('<jimmywhite>'))
+        index = 0
+        while content.find('<jimmywhite>', index + 2) > 0:
+            index = content.find('<jimmywhite>', index + 2)
+            if content[index - 1] != '"':
+                return True
+        content = self.network(url[0:index1 + 1] + self.encode.urlencode('<jimmywhite>'))
+        index = 0
+        while content.find('<jimmywhite>', index + 2) > 0:
+            index = content.find('<jimmywhite>', index + 2)
+            if content[index - 1] != '"':
+                return True
         return False
 
     def typetwo(self, url, index1, index2):
         url = url.strip('&')
-        if self.network(url[0:index1 + 1] + '<jimmywhite>' + url[index2:]).find('"<jimmywhite>"') > 0:
+        if self.network(url[0:index1 + 1] + 'jimmywhite' + url[index2:]).find('"jimmywhite"') > 0:
             return True
-        if self.network(url[0:index1 + 1] + self.encode.capsencode('<jimmywhite>') + url[index2:]).find('"<jimmywhite>"') > 0:
+        if self.network(url[0:index1 + 1] + self.encode.capsencode('jimmywhite') + url[index2:]).find('"jimmywhite"') > 0:
             return True
-        if self.network(url[0:index1 + 1] + self.encode.doubleencode('<jimmywhite>') + url[index2:]).find('"<jimmywhite>"') > 0:
+        if self.network(url[0:index1 + 1] + self.encode.doubleencode('jimmywhite') + url[index2:]).find('"jimmywhite"') > 0:
             return True
-        if self.network(url[0:index1 + 1] + self.encode.htmlencode('<jimmywhite>') + url[index2:]).find('<"jimmywhite>"') > 0:
+        if self.network(url[0:index1 + 1] + self.encode.htmlencode('jimmywhite') + url[index2:]).find('<"jimmywhite"') > 0:
             return True
-        if self.network(url[0:index1 + 1] + self.encode.unicodeencode('<jimmywhite>') + url[index2:]).find('"<jimmywhite>"') > 0:
+        if self.network(url[0:index1 + 1] + self.encode.unicodeencode('jimmywhite') + url[index2:]).find('"jimmywhite"') > 0:
             return True
-        if self.network(url[0:index1 + 1] + self.encode.urlencode('<jimmywhite>') + url[index2:]).find('"<jimmywhite>"') > 0:
+        if self.network(url[0:index1 + 1] + self.encode.urlencode('jimmywhite') + url[index2:]).find('"jimmywhite"') > 0:
             return True
-        if self.network(url[0:index1 + 1] + self.encode.base64encode('<jimmywhite>') + url[index2:]).find('"<jimmywhite>"') > 0:
+        if self.network(url[0:index1 + 1] + self.encode.base64encode('jimmywhite') + url[index2:]).find('"jimmywhite"') > 0:
             return True
         return False
 
     def testone(self, url, index1, index2):
         url = url.strip('&')
         for i in range(0, self.payload.payloads1.__len__()):
-            if self.network(url[0:index1 + 1] + self.payload.payloads1[i] + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.payload.payloads1[i]
-            if self.network(url[0:index1 + 1] + self.encode.capsencode(self.payload.payloads1[i]) + url[index2:]).find(self.encode.capsencode(self.payload.payloads1[i])) > 0:
-                return self.encode.capsencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.doubleencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.doubleencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.htmlencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.htmlencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.unicodeencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.unicodeencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.urlencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.urlencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.base64encode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.base64encode(self.payload.payloads1[i])
+            content = self.network(url[0:index1 + 1] + self.payload.payloads1[i] + url[index2:])
+            index = 0
+            while content.find(self.payload.payloads1[i], index + 1) > 0:
+                index = content.find(self.payload.payloads1[i], index + 1)
+                if content[index - 1] != '"':
+                    return self.payload.payloads1[i]
+            content = self.network(url[0:index1 + 1] + self.encode.capsencode(self.payload.payloads1[i]) + url[index2:])
+            index = 0
+            while content.find(self.encode.capsencode(self.payload.payloads1[i]), index + 1) > 0:
+                index = content.find(self.encode.capsencode(self.payload.payloads1[i]), index + 1)
+                if content[index - 1] != '"':
+                    return self.encode.capsencode(self.payload.payloads1[i])
+            content = self.network(url[0:index1 + 1] + self.encode.urlencode(self.payload.payloads1[i]) + url[index2:])
+            index = 0
+            while content.find(self.payload.payloads1[i], index + 1) > 0:
+                index = content.find(self.payload.payloads1[i], index + 1)
+                if content[index - 1] != '"':
+                    return self.encode.urlencode(self.payload.payloads1[i])
+            content = self.network(url[0:index1 + 1] + self.encode.unicodeencode(self.payload.payloads1[i]) + url[index2:])
+            index = 0
+            while content.find(self.payload.payloads1[i], index + 1) > 0:
+                index = content.find(self.payload.payloads1[i], index + 1)
+                if content[index - 1] != '"':
+                    return self.encode.unicodeencode(self.payload.payloads1[i])
+            content = self.network(url[0:index1 + 1] + self.encode.htmlencode(self.payload.payloads1[i]) + url[index2:])
+            index = 0
+            while content.find(self.payload.payloads1[i], index + 1) > 0:
+                index = content.find(self.payload.payloads1[i], index + 1)
+                if content[index - 1] != '"':
+                    return self.encode.htmlencode(self.payload.payloads1[i])
+            content = self.network(url[0:index1 + 1] + self.encode.doubleencode(self.payload.payloads1[i]) + url[index2:])
+            index = 0
+            while content.find(self.payload.payloads1[i], index + 1) > 0:
+                index = content.find(self.payload.payloads1[i], index + 1)
+                if content[index - 1] != '"':
+                    return self.encode.doubleencode(self.payload.payloads1[i])
+            content = self.network(url[0:index1 + 1] + self.encode.base64encode(self.payload.payloads1[i]) + url[index2:])
+            index = 0
+            while content.find(self.payload.payloads1[i], index + 1) > 0:
+                index = content.find(self.payload.payloads1[i], index + 1)
+                if content[index - 1] != '"':
+                    return self.encode.base64encode(self.payload.payloads1[i])
         return 'fail'
 
     def testtwo(self, url, index1, index2):
         url = url.strip('&')
         for i in range(0, self.payload.payloads2.__len__()):
-            if self.network(url[0:index1 + 1] + self.payload.payloads1[i] + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.payload.payloads1[i]
-            if self.network(url[0:index1 + 1] + self.encode.capsencode(self.payload.payloads1[i]) + url[index2:]).find(self.encode.capsencode(self.payload.payloads1[i])) > 0:
-                return self.encode.capsencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.doubleencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.doubleencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.htmlencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.htmlencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.unicodeencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.unicodeencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.urlencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.urlencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.base64encode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.base64encode(self.payload.payloads1[i])
+            if self.network(url[0:index1 + 1] + self.payload.payloads2[i] + url[index2:]).find(self.payload.payloads2[i]) > 0:
+                return self.payload.payloads2[i]
+            if self.network(url[0:index1 + 1] + self.encode.capsencode(self.payload.payloads2[i]) + url[index2:]).find(self.encode.capsencode(self.payload.payloads2[i])) > 0:
+                return self.encode.capsencode(self.payload.payloads2[i])
+            if self.network(url[0:index1 + 1] + self.encode.doubleencode(self.payload.payloads2[i]) + url[index2:]).find(self.payload.payloads2[i]) > 0:
+                return self.encode.doubleencode(self.payload.payloads2[i])
+            if self.network(url[0:index1 + 1] + self.encode.htmlencode(self.payload.payloads2[i]) + url[index2:]).find(self.payload.payloads2[i]) > 0:
+                return self.encode.htmlencode(self.payload.payloads2[i])
+            if self.network(url[0:index1 + 1] + self.encode.unicodeencode(self.payload.payloads2[i]) + url[index2:]).find(self.payload.payloads2[i]) > 0:
+                return self.encode.unicodeencode(self.payload.payloads2[i])
+            if self.network(url[0:index1 + 1] + self.encode.urlencode(self.payload.payloads2[i]) + url[index2:]).find(self.payload.payloads2[i]) > 0:
+                return self.encode.urlencode(self.payload.payloads2[i])
+            if self.network(url[0:index1 + 1] + self.encode.base64encode(self.payload.payloads2[i]) + url[index2:]).find(self.payload.payloads2[i]) > 0:
+                return self.encode.base64encode(self.payload.payloads2[i])
         return 'fail'
 
     def testthree(self, url, index1, index2):
         url = url.strip('&')
         for i in range(0, self.payload.payloads3.__len__()):
-            if self.network(url[0:index1 + 1] + self.payload.payloads1[i] + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.payload.payloads1[i] + url[index2:]
-            if self.network(url[0:index1 + 1] + self.encode.capsencode(self.payload.payloads1[i]) + url[index2:]).find(self.encode.capsencode(self.payload.payloads1[i])) > 0:
-                return self.encode.capsencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.doubleencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.doubleencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.htmlencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.htmlencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.unicodeencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.unicodeencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.urlencode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.urlencode(self.payload.payloads1[i])
-            if self.network(url[0:index1 + 1] + self.encode.base64encode(self.payload.payloads1[i]) + url[index2:]).find(self.payload.payloads1[i]) > 0:
-                return self.encode.base64encode(self.payload.payloads1[i])
+            if self.network(url[0:index1 + 1] + self.payload.payloads3[i] + url[index2:]).find(self.payload.payloads3[i]) > 0:
+                return self.payload.payloads3[i] + url[index2:]
+            if self.network(url[0:index1 + 1] + self.encode.capsencode(self.payload.payloads3[i]) + url[index2:]).find(self.encode.capsencode(self.payload.payloads3[i])) > 0:
+                return self.encode.capsencode(self.payload.payloads3[i])
+            if self.network(url[0:index1 + 1] + self.encode.doubleencode(self.payload.payloads3[i]) + url[index2:]).find(self.payload.payloads3[i]) > 0:
+                return self.encode.doubleencode(self.payload.payloads3[i])
+            if self.network(url[0:index1 + 1] + self.encode.htmlencode(self.payload.payloads3[i]) + url[index2:]).find(self.payload.payloads3[i]) > 0:
+                return self.encode.htmlencode(self.payload.payloads3[i])
+            if self.network(url[0:index1 + 1] + self.encode.unicodeencode(self.payload.payloads3[i]) + url[index2:]).find(self.payload.payloads3[i]) > 0:
+                return self.encode.unicodeencode(self.payload.payloads3[i])
+            if self.network(url[0:index1 + 1] + self.encode.urlencode(self.payload.payloads3[i]) + url[index2:]).find(self.payload.payloads3[i]) > 0:
+                return self.encode.urlencode(self.payload.payloads3[i])
+            if self.network(url[0:index1 + 1] + self.encode.base64encode(self.payload.payloads3[i]) + url[index2:]).find(self.payload.payloads3[i]) > 0:
+                return self.encode.base64encode(self.payload.payloads3[i])
         return 'fail'
 
-    def testxss(self):
+    def testxss(self, minilock):
+        #minilock.acquire()
         self.lock3.acquire()
         self.controlthread += 1
-        url = self.urlqueue.get()
+        if not self.urlqueue.empty():
+            url = self.urlqueue.get()
+        else:
+            self.lock3.release()
+            return
         self.lock3.release()
         url += '&'
         index2 = 0
@@ -460,26 +555,38 @@ class Crawler:
                     if self.typeone(url, index1, index2):
                         p = self.testone(url, index1, index2)
                         if p != 'fail':
+                            self.lock4.acquire()
                             self.father.text3.insert("end", 'URL:' + url.strip('&') + '\n')
-                            self.father.text3.insert("end", 'VAR:' + url[index3: index1] + '\n')
+                            self.father.text3.insert("end", 'VAR:' + url[index3 + 1: index1] + '\n')
                             self.father.text3.insert("end", 'PAYLOAD:' + p + '\n')
+                            self.father.text3.insert("end", 'XSSURL:' + url[0:index1 + 1] + p + url[index2:].strip('&') + '\n')
+                            self.father.text3.insert("end", '\n')
+                            self.lock4.release()
                             continue
                     if self.typetwo(url, index1, index2):
-                        p = self.testone(url, index1, index2)
+                        p = self.testtwo(url, index1, index2)
                         if p != 'fail':
+                            self.lock4.acquire()
                             self.father.text3.insert("end", 'URL:' + url.strip('&') + '\n')
-                            self.father.text3.insert("end", 'VAR:' + url[index3: index1] + '\n')
+                            self.father.text3.insert("end", 'VAR:' + url[index3 + 1: index1] + '\n')
                             self.father.text3.insert("end", 'PAYLOAD:' + p + '\n')
+                            self.father.text3.insert("end", 'XSSURL:' + url[0:index1 + 1] + p + url[index2:].strip('&') + '\n')
+                            self.father.text3.insert("end", '\n')
+                            self.lock4.release()
                             continue
-                    if self.testthree(url, index1, index2):
-                        p = self.testone(url, index1, index2)
+                    '''if self.testthree(url, index1, index2):
+                        p = self.testthree(url, index1, index2)
                         if p != 'fail':
+                            self.lock4.acquire()
                             self.father.text3.insert("end", 'URL:' + url.strip('&') + '\n')
-                            self.father.text3.insert("end", 'VAR:' + url[index3: index1] + '\n')
+                            self.father.text3.insert("end", 'VAR:' + url[index3 + 1: index1] + '\n')
                             self.father.text3.insert("end", 'PAYLOAD:' + p + '\n')
-                            continue
+                            self.father.text3.insert("end", 'XSSURL:' + url[0:index1 + 1] + p + url[index2:].strip('&') + '\n')
+                            self.father.text3.insert("end", '\n')
+                            self.lock4.release()
+                            continue'''
             else:
                 break
-
+        #minilock.release()
 
 
