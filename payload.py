@@ -111,16 +111,3 @@ class Payload:
                             self.payloads1.append(payload)
                         if self.comment not in payload:
                             self.payloads1.append(payload)
-
-pay = Payload()
-pay.combine1()
-pay.combine2()
-pay.combine3()
-for item in pay.payloads1:
-    print item
-for item in pay.payloads2:
-    print item
-for item in pay.payloads3:
-    print item
-
-

@@ -9,14 +9,17 @@ import time
 
 
 class Crawler:
-    def __init__(self, domain, threads, headers):
+    def __init__(self, domain, threads, depth, times, headers, father):
         self.domain = domain
         if self.domain[self.domain.__len__() - 1] == '/':
             self.domain = self.domain[0:self.domain.__len__() - 1]
         self.threads = threads
+        self.times = times
         self.cookies = {}
         self.headers = {}
         self.count = 0
+        self.depth = depth
+        self.father = father
         self.realdomain = ''
         if headers != '':
             self.setheader(headers)
@@ -140,7 +143,7 @@ class Crawler:
         r = None
         if 'http' in self.domain:
             try:
-                r = requests.get(url=self.domain, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
+                r = requests.get(url=self.domain, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                 self.realdomain = self.domain
             except requests.exceptions.Timeout:
                 pass
@@ -151,7 +154,7 @@ class Crawler:
 
         else:
             try:
-                r = requests.get(url="http://" + self.domain, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
+                r = requests.get(url="http://" + self.domain, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                 self.realdomain = 'http://' + self.domain
             except requests.exceptions.Timeout:
                 pass
@@ -161,7 +164,7 @@ class Crawler:
                 pass
             if r.text.__len__() < 100:
                 try:
-                    r = requests.get(url="https://" + self.domain, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
+                    r = requests.get(url="https://" + self.domain, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                     self.realdomain = 'https://' + self.domain
                 except requests.exceptions.Timeout:
                     pass
@@ -226,9 +229,9 @@ class Crawler:
             if 'http' in url:
                 try:
                     if self.headers:
-                        r = requests.get(url=url, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
+                        r = requests.get(url=url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                     else:
-                        r = requests.get(url=url, verify=False, timeout=(10, 15), headers=self.headers, stream=True, cookies=self.cookies)
+                        r = requests.get(url=url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=self.cookies)
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
@@ -238,9 +241,9 @@ class Crawler:
             else:
                 try:
                     if self.headers:
-                        r = requests.get(url="http://" + url, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
+                        r = requests.get(url="http://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                     else:
-                        r = requests.get(url="http://" + url, verify=False, timeout=(10, 15), headers=self.headers, stream=True, cookies=self.cookies)
+                        r = requests.get(url="http://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=self.cookies)
                 except requests.exceptions.Timeout:
                     pass
                 except requests.exceptions.ConnectionError:
@@ -250,9 +253,9 @@ class Crawler:
                 if r.text.__len__() < 100:
                     try:
                         if self.headers:
-                            r = requests.get(url="https://" + url, verify=False, timeout=(10, 15), headers=self.headers, stream=True)
+                            r = requests.get(url="https://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True)
                         else:
-                            r = requests.get(url="https://" + url, verify=False, timeout=(10, 15), headers=self.headers, stream=True, cookies=self.cookies)
+                            r = requests.get(url="https://" + url, verify=False, timeout=(self.times, self.times), headers=self.headers, stream=True, cookies=self.cookies)
                     except requests.exceptions.Timeout:
                         pass
                     except requests.exceptions.ConnectionError:
@@ -296,7 +299,7 @@ class Crawler:
                                 if self.black2(self.realdomain + url):
                                     if not self.bloomfilter.add(self.realdomain + url):
                                         self.queue.put(self.realdomain + url)
-            if self.count > 5000:
+            if self.count > self.depth:
                 break
         minilock.release()
 
@@ -313,7 +316,4 @@ class Crawler:
                 break
         if not self.bloomfilter2.add(newurl):
             self.urlqueue.put(url[0:url.__len__() - 1])
-            print url[0:url.__len__() - 1]
-
-crawler = Crawler("https://tieba.baidu.com", 20, '''''')
-crawler.stepone()
+            self.father.text2.insert("end", url[0:url.__len__() - 1] + '\n')

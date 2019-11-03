@@ -2,6 +2,8 @@
 import tkinter
 import ctypes
 import tkinter.font
+from guione import GuiOne
+from gui import Gui
 
 
 class MainGui:
@@ -18,11 +20,21 @@ class MainGui:
         img = tkinter.PhotoImage(file='xssmap.gif')
         label1 = tkinter.Label(image=img)
         label1.pack()
-        self.button1 = tkinter.Button(text="完整检测", font=font, cursor="hand2")
+        self.button1 = tkinter.Button(text="完整检测", font=font, cursor="hand2", command=self.one)
         self.button1.pack(ipadx=45, ipady=25, pady=20)
-        self.button3 = tkinter.Button(text="数据包检测", font=font, cursor="hand2")
+        self.button3 = tkinter.Button(text="数据包检测", font=font, cursor="hand2", command=self.two)
         self.button3.pack(ipadx=32, ipady=25, pady=20)
         self.window.mainloop()
+
+    @staticmethod
+    def one():
+        guione = GuiOne()
+        guione.window.mainloop()
+
+    @staticmethod
+    def two():
+        gui = Gui()
+        gui.window.mainloop()
 
 
 maingui = MainGui()

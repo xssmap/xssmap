@@ -22,7 +22,6 @@ class Gui:
         self.setframe2()
         self.setframe3()
         self.setframe4()
-        self.window.mainloop()
 
     def setflag(self):
         try:
@@ -80,7 +79,5 @@ class Gui:
         frame.pack_propagate(0)
         button = tkinter.Button(frame, text="开始", command=self.start, cursor="hand2")
         button.pack(ipadx=200)
-
-gui = Gui()
 
 
